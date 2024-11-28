@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'pages/opening_pages.dart';
+import 'package:mobileapps/pages/auth_page.dart';
+import 'package:mobileapps/pages/home_page.dart';
+import 'settings.dart'; // Import file settings.dart
 
 void main() {
   runApp(MyApp());
@@ -9,12 +11,15 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Smart Chicken Cage',
+      title: 'SMART ANIMAL CAGE',
       theme: ThemeData(
-        primarySwatch: Colors.brown,
+        primaryColor: const Color.fromARGB(255, 247, 247, 246),
       ),
-      home: OpeningPage(),
+      home: LoginPage(),
+      routes: {
+        '/home': (context) => HomePage(),
+        '/settings': (context) => SettingsPage(),
+      },
     );
   }
 }
