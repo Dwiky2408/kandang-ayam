@@ -1,75 +1,67 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'firebase_options.dart';
-import 'sensor_page.dart'; // Import the next page
-import 'change_pass.dart'; // Import the ChangePasswordPage
-import 'package:flutter/services.dart';
+import 'login.dart'; // Make sure this is the correct path to your LoginPage
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({Key? key}) : super(key: key);
+class ChangePasswordPage extends StatefulWidget {
+  const ChangePasswordPage({Key? key}) : super(key: key);
 
   @override
-  _LoginPageState createState() => _LoginPageState();
+  _ChangePasswordPageState createState() => _ChangePasswordPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+class _ChangePasswordPageState extends State<ChangePasswordPage> {
+  final TextEditingController _currentPasswordController =
+      TextEditingController();
+  final TextEditingController _newPasswordController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   String errorMessage = '';
+  bool _isLoading = false;
 
-  // Function to validate email format
-  bool _isValidEmail(String email) {
-    final RegExp emailRegex = RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
-    return emailRegex.hasMatch(email);
-  }
-
-  Future<void> signIn() async {
-    if (!_isValidEmail(_emailController.text)) {
-      setState(() {
-        errorMessage = "Please enter a valid email address.";
-      });
-      return;
-    }
+  // Function to handle the password change
+  Future<void> changePassword() async {
+    setState(() {
+      _isLoading = true;
+    });
 
     try {
-      await _auth.signInWithEmailAndPassword(
-        email: _emailController.text,
-        password: _passwordController.text,
-      );
-      // Navigate to the next page after successful login
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const SensorPage()),
-      );
+      User? user = _auth.currentUser;
+      if (user != null) {
+        String email = user.email ?? '';
+        // First, authenticate the user with their current password
+        await _auth.signInWithEmailAndPassword(
+          email: email,
+          password: _currentPasswordController.text,
+        );
+        // If authenticated, update the password
+        await user.updatePassword(_newPasswordController.text);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Password changed successfully')),
+        );
+
+        // Optionally, log the user out and ask them to log in again
+        await _auth.signOut();
+
+        // Navigate to the login page
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+        );
+      } else {
+        setState(() {
+          errorMessage = 'No user is signed in';
+        });
+      }
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        errorMessage = e.message ?? 'An error occurred';
+      });
     } catch (e) {
       setState(() {
-        errorMessage = e.toString();
+        errorMessage = 'An unexpected error occurred';
       });
-    }
-  }
-
-  Future<void> signUp() async {
-    if (!_isValidEmail(_emailController.text)) {
+    } finally {
       setState(() {
-        errorMessage = "Please enter a valid email address.";
-      });
-      return;
-    }
-
-    try {
-      await _auth.createUserWithEmailAndPassword(
-        email: _emailController.text,
-        password: _passwordController.text,
-      );
-      // Navigate to the next page after successful account creation
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const SensorPage()),
-      );
-    } catch (e) {
-      setState(() {
-        errorMessage = e.toString();
+        _isLoading = false;
       });
     }
   }
@@ -77,51 +69,160 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Login'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email',
+      body: Stack(
+        children: [
+          // Background Gradient
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFFd7ccc8),
+                  Color(0xFFbcaaa4),
+                  Color(0xFF8d6e63)
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
             ),
-            TextField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Password',
+          ),
+          // Add custom shapes
+          Positioned(
+            top: -100,
+            left: -100,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.2),
               ),
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: signIn,
-              child: const Text('Login'),
-            ),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: signUp,
-              child: const Text('Create New Account'),
-            ),
-            if (errorMessage.isNotEmpty)
-              Text(
-                errorMessage,
-                style: const TextStyle(color: Colors.red),
+          ),
+          Positioned(
+            bottom: -50,
+            right: -50,
+            child: Container(
+              width: 150,
+              height: 150,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.3),
               ),
-            TextButton(
-              onPressed: () {
-                // Navigate to Change Password page using the correct route
-                Navigator.pushNamed(context, '/ganti');
-              },
-              child: const Text('Forgot Password?'),
             ),
-          ],
-        ),
+          ),
+          // Add animated floating icons
+          Positioned(
+            top: 50,
+            left: 30,
+            child: const Icon(
+              Icons.cloud,
+              size: 50,
+              color: Colors.white54,
+            ),
+          ),
+          Positioned(
+            bottom: 100,
+            right: 50,
+            child: const Icon(
+              Icons.star,
+              size: 30,
+              color: Colors.white54,
+            ),
+          ),
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Card(
+                elevation: 8,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.lock,
+                        size: 80,
+                        color: Color(0xFF6d4c41),
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        'Change Password',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      TextField(
+                        controller: _currentPasswordController,
+                        obscureText: true,
+                        decoration: InputDecoration(
+                          labelText: 'Current Password',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: _newPasswordController,
+                        obscureText: true,
+                        decoration: InputDecoration(
+                          labelText: 'New Password',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: _isLoading ? null : changePassword,
+                        style: ElevatedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 14, horizontal: 24),
+                          backgroundColor: const Color(0xFF8d6e63),
+                        ),
+                        child: _isLoading
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
+                            : const Text(
+                                'Change Password',
+                                style: TextStyle(fontSize: 16),
+                              ),
+                      ),
+                      const SizedBox(height: 10),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context); // Navigate back
+                        },
+                        child: const Text(
+                          'Back',
+                          style: TextStyle(color: Color(0xFF6d4c41)),
+                        ),
+                      ),
+                      if (errorMessage.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10),
+                          child: Text(
+                            errorMessage,
+                            style: const TextStyle(color: Colors.red),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
