@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "323672625777",
+    "firebase_url": "https://animal-cage-default-rtdb.firebaseio.com",
+    "project_id": "animal-cage",
+    "storage_bucket": "animal-cage.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:323672625777:android:043e285f1ee09cc29bc1d0",
+        "android_client_info": {
+          "package_name": "com.animal.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDe5Pe1qRcFvxvWRjC9fqp0aQm5YwUss04"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
